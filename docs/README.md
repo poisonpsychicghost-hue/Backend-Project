@@ -112,3 +112,6 @@ BACKEND PROJECT - ROMAN PROVINCE SIMULATOR -
 
     - POST /provinces/{provinceId}/events/schedule – schedule events for a future turn based on current state (used during end-turn processing).
 
+--Branching Strategy--
+
+Branching should be done when implementing new features. 
