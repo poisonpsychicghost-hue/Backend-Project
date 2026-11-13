@@ -16,13 +16,16 @@ def create_app():
     else:
         app.config.from_object(DevelopmentConfig)
     
-
+    from . import user
 
     db.init_app(app)
     migrate.init_app(app, db)
 
     app.register_blueprint(base_game_bp)
     print(f'DATABASE: {app.config["SQLALCHEMY_DATABASE_URI"]}')
+
+    
+
     return app
 
 
