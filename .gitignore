@@ -12,3 +12,4 @@ __pycache__/
 # Secrets - never commit these
 .env
 **/.env
+game_app/core/__pycache__/__init__.cpython-314.pyc
