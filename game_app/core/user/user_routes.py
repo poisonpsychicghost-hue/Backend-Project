@@ -1,7 +1,9 @@
-from flask import Blueprint, request, jsonify
-from werkzeug.security import generate_password_hash
+from flask import Blueprint, request, jsonify, current_app
+from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User
 from ..extensions import db
+import jwt
+import datetime
 
 user_route_bp = Blueprint("user", __name__, url_prefix="/user")
 
@@ -49,8 +51,45 @@ def register_user():
 
     return jsonify(return_body), 201
 
+def user_login():
+    if not request.is_json:
+        return jsonify({"code": "Bad_Request", "message": "Request Body must be JSON."}), 400
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
+    if (username is None or username == "") or (password is None or password == ""):
+        return jsonify({"code": "Unauthorized", "message": "Invalid Credentials."}), 401
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        return jsonify({"code": "Unauthorized", "message": "Invalid Credentials."}), 401
+    if check_password_hash(user.password_hash, password) == False:
+        return jsonify({"code": "Unauthorized", "message": "Invalid Credentials."}), 401
+
+    expiry = datetime.datetime.utcnow() + datetime.timedelta(current_app.config["JWT_LIFETIME_HOURS"])
+    payload = {
+        'sub': str(user.id),
+        'username': str(user.username),
+        'role': "player",
+        'exp': expiry
+    }
+    token = jwt.encode(
+        payload,
+        current_app.config["JWT_SECRET"],
+        algorithm="HS256"
+    )
+
+    response_body = {"username": user.username, "token": token, "message": f"Login OK. Token Expiry: ({expiry})"}
+    return jsonify(response_body), 200
+    
+
 user_route_bp.add_url_rule(
     "/register",
     view_func=register_user,
+    methods=["POST"]
+)
+
+user_route_bp.add_url_rule(
+    "/login",
+    view_func=user_login,
     methods=["POST"]
 )
