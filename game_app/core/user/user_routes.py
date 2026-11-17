@@ -1,7 +1,8 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User
 from ..extensions import db
+from .auth_decorators import require_auth_token
 import jwt
 import datetime
 
@@ -65,7 +66,7 @@ def user_login():
     if check_password_hash(user.password_hash, password) == False:
         return jsonify({"code": "Unauthorized", "message": "Invalid Credentials."}), 401
 
-    expiry = datetime.datetime.utcnow() + datetime.timedelta(current_app.config["JWT_LIFETIME_HOURS"])
+    expiry = datetime.datetime.utcnow() + datetime.timedelta(hours=current_app.config["JWT_LIFETIME_HOURS"])
     payload = {
         'sub': str(user.id),
         'username': str(user.username),
@@ -80,6 +81,56 @@ def user_login():
 
     response_body = {"username": user.username, "token": token, "message": f"Login OK. Token Expiry: ({expiry})"}
     return jsonify(response_body), 200
+
+@require_auth_token
+def user_profile_getter():
+    user_id = g.user_id
+    user = User.query.filter_by(id=user_id).first()
+    if user is None:
+        return jsonify({'code': 'Not Found', 'message': 'User Profile Not Found'}), 404
+
+    body = {
+        'id': user.id,
+        'username': user.username,
+        'created_at': user.created_at,
+        'display_name': user.display_name,
+        'email': user.email
+    }
+
+    return jsonify(body), 200
+
+@require_auth_token
+def user_profile_update():
+    if not request.is_json:
+        return jsonify({"code": "Bad_Request", "message": "Request Body must be JSON."}), 400
+    data = request.get_json()
+    user_id = g.user_id
+    user = User.query.filter_by(id=user_id).first()
+    if user is None:
+        return jsonify({'code': 'Not Found', 'message': 'User Profile Not Found'}), 404
+    if 'display_name' in data:
+        display_name = data.get('display_name').strip()
+        if len(display_name) < 4 or len(display_name) > 32:
+            return jsonify({'code': 'Bad Request', 'message': 'Display Name must be between 4-32 Characters'}), 400
+        user.display_name = display_name
+    if 'email' in data:
+        email = data.get('email').strip()
+        if len(email) < 8 or len(email) > 128:
+            return jsonify({'code': 'Bad Request', 'message': 'Email must be between 8 and 128 Characters'}), 400
+        if '@' not in email:
+            return jsonify({'code': 'Bad Request', 'message': 'Email must contain an "@" symbol.'}), 400
+        user.email = email
+    db.session.commit()
+    user = User.query.filter_by(id=user_id).first()
+    body = {
+        'id': user.id,
+        'username': user.username,
+        'created_at': user.created_at,
+        'display_name': user.display_name,
+        'email': user.email
+        }
+    return jsonify(body), 200
+    
     
 
 user_route_bp.add_url_rule(
@@ -92,4 +143,16 @@ user_route_bp.add_url_rule(
     "/login",
     view_func=user_login,
     methods=["POST"]
+)
+
+user_route_bp.add_url_rule(
+    '/me',
+    view_func=user_profile_getter,
+    methods=['GET']
+)
+
+user_route_bp.add_url_rule(
+    '/me',
+    view_func=user_profile_update,
+    methods=["PATCH"]
 )
