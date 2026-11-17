@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from .extensions import db, migrate
 from .blueprints.base import base_game_bp
 from .user.user_routes import user_route_bp
+from .user.admin_routes import admin_route_bp
 
 def create_app():
     app = Flask(__name__)
@@ -25,6 +26,7 @@ def create_app():
 
     app.register_blueprint(base_game_bp)
     app.register_blueprint(user_route_bp)
+    app.register_blueprint(admin_route_bp)
     print(f'DATABASE: {app.config["SQLALCHEMY_DATABASE_URI"]}')
 
     

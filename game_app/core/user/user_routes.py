@@ -70,7 +70,7 @@ def user_login():
     payload = {
         'sub': str(user.id),
         'username': str(user.username),
-        'role': "player",
+        'role': user.role,
         'exp': expiry
     }
     token = jwt.encode(
