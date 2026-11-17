@@ -10,4 +10,4 @@ class User(db.Model):
     password_hash = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     display_name = db.Column(db.String, nullable=True)
-
+    role = db.Column(db.String, nullable=False, server_default='user')
