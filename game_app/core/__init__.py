@@ -19,7 +19,7 @@ def create_app():
         app.config.from_object(DevelopmentConfig)
     
     from . import user
-
+    from . import province
 
     db.init_app(app)
     migrate.init_app(app, db)
