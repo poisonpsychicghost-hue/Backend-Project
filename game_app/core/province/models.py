@@ -9,5 +9,5 @@ class Province(db.Model):
     current_turn = db.Column(db.String, nullable=False, server_default='1')
     difficulty = db.Column(db.String, nullable=False, server_default='Medium')
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-
+    owner = db.relationship('User', back_populates="provinces")
 
