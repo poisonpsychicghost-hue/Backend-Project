@@ -50,31 +50,47 @@ def list_my_provinces():
 
 @require_auth_token
 def province_by_id(id):
-    user_id = g.user_id
+
+
     province = Province.query.filter_by(id=id).first()
     if province is None:
         return jsonify({'code': 'Not Found', 'message': 'Province Not Found'}), 404
 
+    is_owner = g.user_id == province.user_id
+    is_admin = g.role == 'admin'
+
     if request.method == 'GET':
-    
+        if not (is_owner or is_admin):
+            return jsonify({'code': 'Forbidden', 'message': 'You do not have access to this Province'}), 403
+
+
         return_body = {
             'id': province.id,
             'name': province.name,
             'current_turn': province.current_turn,
-            'difficulty': province.difficulty
+            'created_at': province.created_at,
+            'difficulty': province.difficulty,
+            'owner': province.owner.username
         }
         return jsonify(return_body), 200
     
     if request.method == 'PATCH':
         if not request.is_json:
             return jsonify({'code': 'Bad Request', 'message': 'Request Body must be JSON'}), 400
+        if not (is_owner or is_admin):
+            return jsonify({'code': 'Forbidden', 'message': 'You do not have access to this Province'}), 403
         data = request.get_json()
-        if data.get('name') is not None or data.get('name').strip() != '':
-            province.name = data.get('name')
+        if data.get('name') is not None:
+            if data.get('name').strip() != '':
+                province.name = data.get('name')
         if data.get('difficulty') is not None:
-            if data.get('difficulty') not in ['easy, medium, hard'] or data.get('difficulty').strip != '':
+            if data.get('difficulty').strip() not in ['easy', 'medium', 'hard']:
                 return jsonify({'code': 'Bad Request', 'message': 'Difficulty must be ("easy", "medium", or "hard").'}), 400
-            province.difficulty = data.get('difficulty')
+            if data.get('difficulty').strip != '':
+                province.difficulty = data.get('difficulty')
+        if is_admin:
+            if data.get('current_turn') is not None:
+                province.current_turn = str(data.get('current_turn'))
         db.session.commit()
         return_body = {
             'id': province.id,
@@ -85,6 +101,8 @@ def province_by_id(id):
         return jsonify(return_body), 200
 
     if request.method == 'DELETE':
+        if not (is_owner or is_admin):
+            return jsonify({'code': 'Forbidden', 'message': 'You do not have access to this Province'}), 403
         p_id = province.id
         db.session.delete(province)
         db.session.commit()

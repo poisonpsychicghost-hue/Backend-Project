@@ -12,3 +12,4 @@ class User(db.Model):
     display_name = db.Column(db.String, nullable=True)
     role = db.Column(db.String, nullable=False, server_default='user')
     provinces = db.relationship("Province", back_populates="owner")
+    
