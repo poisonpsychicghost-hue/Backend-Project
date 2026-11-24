@@ -6,6 +6,7 @@ from .blueprints.base import base_game_bp
 from .user.user_routes import user_route_bp
 from .user.admin_routes import admin_route_bp
 from .province.province_routes import province_route_bp
+from .errors import bad_request_handler, unauthorized_handler, forbidden_handler, not_found_handler, not_allowed_handler, service_error_handler
 
 def create_app():
     app = Flask(__name__)
@@ -29,10 +30,13 @@ def create_app():
     app.register_blueprint(user_route_bp)
     app.register_blueprint(admin_route_bp)
     app.register_blueprint(province_route_bp)
+    app.register_error_handler(400, bad_request_handler)
+    app.register_error_handler(401, unauthorized_handler)
+    app.register_error_handler(403, forbidden_handler)
+    app.register_error_handler(404, not_found_handler)
+    app.register_error_handler(405, not_allowed_handler)
+    app.register_error_handler(500, service_error_handler)
     print(f'DATABASE: {app.config["SQLALCHEMY_DATABASE_URI"]}')
 
-    
-
     return app
-
 
