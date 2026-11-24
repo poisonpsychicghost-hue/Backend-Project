@@ -49,18 +49,46 @@ def list_my_provinces():
     return jsonify({'message': f'List of Provinces for user {user_id}', 'province_list': return_list}), 200
 
 @require_auth_token
-def get_province_by_id(id):
+def province_by_id(id):
     user_id = g.user_id
     province = Province.query.filter_by(id=id).first()
     if province is None:
         return jsonify({'code': 'Not Found', 'message': 'Province Not Found'}), 404
-    return_body = {
-        'id': province.id,
-        'name': province.name,
-        'current_turn': province.current_turn,
-        'difficulty': province.difficulty
-    }
-    return jsonify(return_body), 200
+
+    if request.method == 'GET':
+    
+        return_body = {
+            'id': province.id,
+            'name': province.name,
+            'current_turn': province.current_turn,
+            'difficulty': province.difficulty
+        }
+        return jsonify(return_body), 200
+    
+    if request.method == 'PATCH':
+        if not request.is_json:
+            return jsonify({'code': 'Bad Request', 'message': 'Request Body must be JSON'}), 400
+        data = request.get_json()
+        if data.get('name') is not None or data.get('name').strip() != '':
+            province.name = data.get('name')
+        if data.get('difficulty') is not None:
+            if data.get('difficulty') not in ['easy, medium, hard'] or data.get('difficulty').strip != '':
+                return jsonify({'code': 'Bad Request', 'message': 'Difficulty must be ("easy", "medium", or "hard").'}), 400
+            province.difficulty = data.get('difficulty')
+        db.session.commit()
+        return_body = {
+            'id': province.id,
+            'name': province.name,                
+            'current_turn': province.current_turn,
+            'difficulty': province.difficulty                        
+        }
+        return jsonify(return_body), 200
+
+    if request.method == 'DELETE':
+        p_id = province.id
+        db.session.delete(province)
+        db.session.commit()
+        return jsonify({'code': 'Deleted', 'message': f'Province {p_id} Deleted Successfully'}), 200
 
 province_route_bp.add_url_rule(
     '/create',
@@ -76,6 +104,6 @@ province_route_bp.add_url_rule(
 
 province_route_bp.add_url_rule(
     '/<int:id>',
-    view_func=get_province_by_id,
-    methods=['GET']
+    view_func=province_by_id,
+    methods=['GET', 'PATCH', 'DELETE']
 )    
