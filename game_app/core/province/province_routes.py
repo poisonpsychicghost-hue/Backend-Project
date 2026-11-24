@@ -48,6 +48,20 @@ def list_my_provinces():
         return_list.append(item)
     return jsonify({'message': f'List of Provinces for user {user_id}', 'province_list': return_list}), 200
 
+@require_auth_token
+def get_province_by_id(id):
+    user_id = g.user_id
+    province = Province.query.filter_by(id=id).first()
+    if province is None:
+        return jsonify({'code': 'Not Found', 'message': 'Province Not Found'}), 404
+    return_body = {
+        'id': province.id,
+        'name': province.name,
+        'current_turn': province.current_turn,
+        'difficulty': province.difficulty
+    }
+    return jsonify(return_body), 200
+
 province_route_bp.add_url_rule(
     '/create',
     view_func=create_province,
@@ -59,5 +73,9 @@ province_route_bp.add_url_rule(
     view_func=list_my_provinces,
     methods=['GET']
 )
-    
-    
+
+province_route_bp.add_url_rule(
+    '/<int:id>',
+    view_func=get_province_by_id,
+    methods=['GET']
+)    
