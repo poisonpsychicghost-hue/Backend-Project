@@ -34,9 +34,22 @@ def create_province():
 @require_auth_token
 def list_my_provinces():
     user_id = g.user_id
-    provinces = Province.query.filter_by(user_id=user_id).all()
+    page = 1
+    per_page = 10
+    try:
+        if request.args.get('page'):
+            if int(request.args.get('page')) >= 1:
+                page = int(request.args.get('page'))
+        if request.args.get('per_page'):
+            if int(request.args.get('per_page')) >= 1 and int(request.args.get('per_page')) <= 25:
+                per_page = int(request.args.get('per_page'))
+    except ValueError:
+        page = 1
+        per_page = 10
+    query = Province.query.filter_by(user_id=user_id).order_by(Province.id)
+    provinces_page = query.paginate(page=page, per_page=per_page, error_out=False)
     return_list = []
-    for province in provinces:
+    for province in provinces_page.items:
         item = {
             'id': province.id,
             'name': province.name,
@@ -46,7 +59,7 @@ def list_my_provinces():
 
         }
         return_list.append(item)
-    return jsonify({'message': f'List of Provinces for user {user_id}', 'province_list': return_list}), 200
+    return jsonify({'message': f'List of Provinces for user {user_id}', 'page': page, 'per_page': per_page, 'total': provinces_page.total, 'pages': provinces_page.pages, 'province_list': return_list}), 200
 
 @require_auth_token
 def province_by_id(id):
