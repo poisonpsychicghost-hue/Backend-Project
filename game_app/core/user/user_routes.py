@@ -129,9 +129,7 @@ def user_profile_update():
         'display_name': user.display_name,
         'email': user.email
         }
-    return jsonify(body), 200
-    
-    
+    return jsonify(body), 200 
 
 user_route_bp.add_url_rule(
     "/register",
