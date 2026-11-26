@@ -147,5 +147,5 @@ Branching should be done when implementing new features.
 These documents provide example request/response flows and security behavior for the current API:
 
 - User & Admin routes review – see /docs/security-test-19-11.md
-- Province routes review – (planned) /docs/<to-be-named-province-review>.md
+- Province routes review – (planned) /docs/province_tests_25-11.md
 - Additional services – reserved for future security reviews as more services are implemented.
