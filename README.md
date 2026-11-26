@@ -10,7 +10,9 @@ BACKEND PROJECT - ROMAN PROVINCE SIMULATOR -
 
 - It will expose a clear set of API endpoints that an eventual frontend can use to run the game loop through a single public gateway.
 
---Running Locally (Unit 1 Skeleton)--
+--Running Locally (v0.4)--
+
+When a user spins up the app they get an authenticated Flask API that provides User + Province (Game Session) management alongside a simple Admin Route for checking total User base.
 
 To run this backend locally:
 
@@ -22,36 +24,27 @@ To run this backend locally:
     pip install -r requirements.txt
     flask run
 
-Note: This starts the **Unit 1 skeleton** only. The game endpoints listed below are design targets and are not implemented yet.
+- Confirmation: You should see Flask listening on http://127.0.0.1:5000 in the terminal.
 
---Environment Variables--
+-Environment Variables-
 
--Used-
-APP_ENV - Sets the App's Config Environment
-DATABASE_URL - Main Database Path
+Currently In Usage:
+APP_ENV - Configuration Setting For App; Expected Values ['development', 'testing', 'production']
+DATABASE_URL - Path for sql database; example - "sqlite:///instance/app.db"
+JWT_SECRET - secret key for issuing and reading JWTs; Keep Secret
 
--Unused-
-JWT_SECRET - Read to Issue/Validate JWT's
-INTERNAL_SERVICE_TOKEN_SECRET - Read to Protect Internal Routes
+Designed For Future:
+INTERNAL_SERVICE_TOKEN_SECRET - Will be used for internal-only access routes used during game loop. 
 
---Migrations--
-
-Migration tooling is installed and wired (Flask-Migrate)
-V0.01 - No Models Designed -> No Migration Scripts
-
-Once models exist, migrations will be run with flask db migrate / flask db upgrade
-
---Game concept & learning focus--
-
-- The Roman Province Simulator is a semi-historical game where the player governs one Roman province.
-
-- To progress, the player must balance limited resources against population needs, infrastructure projects, and turn-by-turn events.
-
-- The goal is not strict historical or economic realism.
-
-- Instead, the game focuses on teaching basic resource-management skills (especially planning under constraints and trade-offs) and sparking interest in Roman logistics and governance, in a simple, interactive way.
 
 --Architecture-- 
+NOTE: This section describes design targets for a future MVP v1.0 build.  
+As of v0.4, the implemented services are:
+-- User services (including Admin routes)
+-- Province services
+
+Other services (population, tax, infrastructure, events) are not yet implemented; their routes below are design-only for now.
+
 
 - This backend is structured around six logical services, separated by data ownership and responsibility.
 
@@ -69,25 +62,26 @@ Once models exist, migrations will be run with flask db migrate / flask db upgra
 
     - events-service – manages the master event catalog and scheduled events that affect a province on future turns.
 
---Public routes – user-service--
+---Implemented Routes---
 
-    - POST /users – create a new user profile (registration: username, email, password, etc.).
+- Users Services
+-- POST /user/register - auth:public - create a new user with username/email/password
+-- POST /user/login - auth:public - return a JWT on valid credentials
+-- GET /user/me - auth:JWT - return current user's profile
+-- PATCH /user/me -auth:JWT - update current user's display_name or email
 
-    - GET /users/{userId}/provinces – list the user’s saved game sessions (province ids + basic metadata).
+- Admin Services
+-- GET /admin/system-check - auth:JWT (role == 'admin' only) - return full list of registered users
 
-    - PATCH /users/{userId} – update user profile fields (email, password, display name).
+- Province Services
+-- POST /province/create - auth:JWT - creates a province with name and difficulty; ownership on user_id from JWT
+-- GET /province/list - auth:JWT - Returns a paginated list of current user's provinces
+-- GET /province/<int:id> - auth:JWT - returns a province profile if authenticated owner in JWT
+-- PATCH /province/<int:id> - auth:JWT - updates name and difficulty if authenticated owner from JWT or admin; Admin may also update current_turn
+-- DELETE /province/<int:id> -auth:JWT - deletes province if authenticated owner or admin
 
-    - DELETE /users/{userId} (optional) – delete a user account and all related game sessions.
 
---Public routes – province-service--
-
-    - POST /provinces – create a new province (game session) for a given user; initializes base province and region data.
-
-    - GET /provinces/{provinceId} – load high-level game state for a province (turn number, region list, basic resource summary).
-
-    - PATCH /provinces/{provinceId} – update province metadata (e.g. name, difficulty, maybe last-accessed time) or apply a “save” operation.
-
-    - DELETE /provinces/{provinceId} – delete a game session and trigger cleanup of related data in other services.
+---END OF IMPLEMENTED ROUTES---
 
 --Public routes – population-service--
 
@@ -146,3 +140,12 @@ Once models exist, migrations will be run with flask db migrate / flask db upgra
 --Branching Strategy--
 
 Branching should be done when implementing new features. 
+
+
+--Security & HTTP Walkthrough Docs--
+
+These documents provide example request/response flows and security behavior for the current API:
+
+- User & Admin routes review – see /docs/security-test-19-11.md
+- Province routes review – (planned) /docs/<to-be-named-province-review>.md
+- Additional services – reserved for future security reviews as more services are implemented.
