@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    ports: 
+      - "5001:8000"
+    environment:
+      APP_ENV: 'production'
+      DATABASE_URL: "postgresql+psycopg://ADMIN1:Secular4Cheesecake@db:5432/provincial_db"
+      JWT_SECRET: "Secret_key-4-U"
+
+    depends_on: 
+      db:
+        condition: service_healthy
+  
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: 'ADMIN1'
+      POSTGRES_PASSWORD: 'Secular4Cheesecake'
+      POSTGRES_DB: 'provincial_db'
+    volumes: 
+      - roman_province_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ADMIN1 -d provincial_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  roman_province_db:
