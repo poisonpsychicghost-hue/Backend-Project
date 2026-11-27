@@ -13,4 +13,4 @@ COPY migrations ./migrations
 
 COPY README.md .
 
-CMD sh -c 'gunicorn -b 0.0.0.0:${PORT:-8000} "game_app:create_app()"'
+CMD sh -c 'gunicorn -b 0.0.0.0:${PORT:-8000} "game_app.core:create_app()"'
