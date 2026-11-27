@@ -14,28 +14,50 @@ BACKEND PROJECT - ROMAN PROVINCE SIMULATOR -
 
 When a user spins up the app they get an authenticated Flask API that provides User + Province (Game Session) management alongside a simple Admin Route for checking total User base.
 
+Prerequisites:
+- Docker /Docker Compose 
+
 To run this backend locally:
 
-1. Clone this repository to your machine.
-2. Open a terminal **in the project root directory** (the folder that contains `README.md` and `requirements.txt`), then run:
+1. Build and start services:
+    docker compose up --build
+    --URL/PORT: http://localhost:5001/
 
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-    flask run
+2. In a Separate Terminal - run migrations in container:
+    docker exec -it backend-project-web-1 sh
 
-- Confirmation: You should see Flask listening on http://127.0.0.1:5000 in the terminal.
+    export FLASK_APP="game_app:create_app()"
+
+    flask db upgrade
 
 -Environment Variables-
 
+Copy .env.example -> .env 
+
 Currently In Usage:
 APP_ENV - Configuration Setting For App; Expected Values ['development', 'testing', 'production']
-DATABASE_URL - Path for sql database; example - "sqlite:///instance/app.db"
+DATABASE_URL - Path for sql database; example -  `postgresql+psycopg://ADMIN1:Secular4Cheesecake@db:5432/provincial_db`
+
 JWT_SECRET - secret key for issuing and reading JWTs; Keep Secret
 
 Designed For Future:
 INTERNAL_SERVICE_TOKEN_SECRET - Will be used for internal-only access routes used during game loop. 
 
+-- Do not commit .env, it should be added to .gitignore upon creation. 
+
+-Confirmation Sequence- 
+- register user http://0.0.0.0:5001/user/register
+- login to get JWT http://0.0.0.0:5001/user/login
+- create province http://0.0.0.0:5001/province/create
+- list provinces http://0.0.0.0:5001/province/list
+
+-Persistence Verification-
+    docker compose down
+    docker compose up
+    GET /province/list
+
+-Shut Down- 
+    docker compose down
 
 --Architecture-- 
 NOTE: This section describes design targets for a future MVP v1.0 build.  
